@@ -195,135 +195,7 @@ void answer()
     cout << (target_reached ? "yes" : "no") << "\n";
 }
 #pragma endregion
-void solve()
-{
-    ll R, C;
-    cin >> R >> C;
-    vector<vl> attacked(R, vl(C, 0LL));
-    vector<vector<bool>> reachable(R, vector<bool>(C, false)),
-        knights(R, vector<bool>(C, false)),
-        seen(R, vector<bool>(C, false));
 
-    pair<ll, ll> target, start;
-    queue<pair<int, int>> q;
-    auto in_b = [&](ll r, ll c)
-    { return (r >= 0 && r < R && c >= 0 && c < C); };
-    vector<pair<int, int>> k_move = {{1, 2}, {-1, 2}, {-2, 1}, {-1, -2}, {-2, -1}, {-2, 1}, {2, -1}, {2, 1}};
-    vector<pair<int, int>> move = {{0, 1}, {-1, 0}, {0, -1}, {1, 0}};
-    vector<string> move_print = {"RIGHT", "UP", "LEFT", "DOWN"};
-    auto scan = [&](ll r, ll c, int dir, function<bool(ll, ll)> p, function<void(ll, ll)> f) -> void
-    {
-        auto &[dr, dc] = move[dir];
-        ll _r = r + dr, _c = c + dc;
-        while (in_b(_r, _c))
-        {
-            // cout << "scanned: " << _r << ", " << _c << "\n";
-            f(_r, _c);
-            if (!p(_r, _c))
-            {
-                break;
-            }
-            _r += dr;
-            _c += dc;
-        }
-    };
-    auto unlock = [&](ll r, ll c, int dir)
-    {
-        scan(r, c, dir, [&](ll _r, ll _c)
-             { return !knights[_r][_c]; }, [&](ll _r, ll _c)
-             { if (!reachable[_r][_c] && !attacked[_r][_c]) {
-                // cout << "unlocked: " << _r << ", " << _c <<"\n";
-                reachable[_r][_c] = true;
-                q.push({_r, _c});
-             } });
-    };
-    auto search = [&](ll r, ll c, int dir)
-    {
-        pair<int, int> reached = {-1, -1};
-        scan(r, c, dir, [&](ll _r, ll _c)
-             { return !knights[_r][_c]; }, [&](ll _r, ll _c)
-             {if (!seen[_r][_c] && !attacked[_r][_c])reached.first = _r, reached.second = _c; });
-        if (reached.first != -1 && reached.second != -1)
-        {
-            // cout << "Searched from " << r << ", " << c << " in dir " << move_print[dir] << " and found: " << reached.first << ", " << reached.second << "\n";
-            unlock(r, c, dir);
-        }
-    };
-    auto attack = [&](ll r, ll c, ll amt)
-    {
-        for (auto &[dr, dc] : k_move)
-        {
-            ll nr = r + dr, nc = c + dc;
-            if (!in_b(nr, nc))
-                continue;
-            attacked[nr][nc] += amt;
-            reachable[nr][nc] = attacked[nr][nc] <= 0;
-            if (reachable[nr][nc])
-            {
-                rep(i, 0, 4)
-                    search(nr, nc, i);
-            }
-        }
-    };
-    auto read = [&](const string &s, ll r)
-    {
-        rep(c, 0, s.size())
-        {
-            if (s[c] == 'T')
-            {
-                target.first = r;
-                target.second = c;
-            }
-            if (s[c] == 'K')
-            {
-                knights[r][c] = true;
-                attack(r, c, 1);
-            }
-            if (s[c] == 'R')
-            {
-                // cout << "Rook starts at: " << r << ", " << c << "\n";
-                start.first = r;
-                start.second = c;
-            }
-        }
-    };
-
-    cin.ignore();
-    rep(i, 0, R)
-    {
-        string s;
-        getline(cin, s);
-        read(s, i);
-    }
-    q.push(start);
-    rep(i, 0, 4)
-        unlock(start.first, start.second, i);
-
-    while (!q.empty())
-    {
-        if (reachable[target.first][target.second])
-        {
-            cout << "yes\n";
-            return;
-        }
-
-        auto &[r, c] = q.front();
-        q.pop();
-        if (seen[r][c])
-            continue;
-        seen[r][c] = true;
-        // cout << "Rook at : " << r << ", " << c << "\n";
-        if (knights[r][c])
-        {
-            // cout << "Rook consumed knight at " << r << ", " << c << "\n";
-            attack(r, c, -1);
-            knights[r][c] = false;
-        }
-        rep(i, 0, 4)
-            search(r, c, i);
-    }
-    cout << "no\n";
-}
 int main()
 {
     ios::sync_with_stdio(false);
@@ -334,7 +206,7 @@ int main()
     // cin >> T;
     while (T--)
     {
-        solve();
+        answer();
     }
     return 0;
 }

@@ -69,92 +69,78 @@ ostream &operator<<(ostream &o, const vector<T> &vec)
 }
 
 #pragma endregion
-struct edge
-{
-    int to, w;
-};
-struct Edge
-{
-    int u, id;
-    edge e;
-};
-struct DSU
-{
-    vector<int> repr, rank;
-    DSU(int _n) : repr(_n), rank(_n, 0) { iota(repr.begin(), repr.end(), 0); };
-    void unite(int a, int b)
-    {
-        a = find(a);
-        b = find(b);
-        if (a != b)
-        {
-            if (rank[a] < rank[b])
-                swap(a, b);
-            repr[b] = a;
-            if (rank[a] == rank[b])
-                ++rank[a];
-        }
-    }
-    int find(int v)
-    {
-        if (v == repr[v])
-            return v;
 
-        return repr[v] = find(repr[v]);
-    }
-};
-void solve(bool &go)
+void solve()
 {
     int N, M;
     cin >> N >> M;
-    if (N == 0 && M == 0)
-    {
-        go = false;
-        return;
-    }
-    if (M == 0)
-    {
-        cout << "Impossible\n";
-        return;
-    }
-    vector<vector<edge>> adj(N);
-    vector<Edge> edges;
-    edges.reserve(N);
-    DSU dsu(N);
-    rep(i, 0, M)
-    {
-        int u, v, w;
-        cin >> u >> v >> w;
-        adj[u].push_back({v, w});
-        adj[v].push_back({u, w});
-        edges.push_back({u, i, {v, w}});
-    }
+    vector<string> g(N);
+    vector<vector<bool>> vis(N, vector<bool>(M, 0));
+    ll coast = 0LL;
+    vector<pair<int, int>> look = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
-    sort(edges.begin(), edges.end(), [](Edge a, Edge b)
-         { return a.e.w < b.e.w; });
-
-    vector<Edge> MST;
-    MST.reserve(M);
-    for (const auto &x : edges)
+    cin.ignore();
+    rep(i, 0, N)
     {
-        if (MST.size() == 0 || dsu.find(x.u) != dsu.find(x.e.to))
+        getline(cin, g[i]);
+    }
+    auto in_b = [&](int r, int c) -> bool
+    {
+        return r >= 0 && r < N && c >= 0 && c < M;
+    };
+
+    auto get_coast = [&](int r, int c) -> int
+    {
+        int count = 0;
+        for (const auto &[dr, dc] : look)
         {
-            MST.push_back(x);
-            dsu.unite(x.u, x.e.to);
+            int nr = r + dr, nc = c + dc;
+            if (in_b(nr, nc) && g[nr][nc] == '1')
+                ++count;
         }
-    }
-    cout << accumulate(MST.begin(), MST.end(), 0LL, [](ll curr, Edge x)
-                       { return curr + x.e.w; })
-         << "\n";
-    sort(MST.begin(), MST.end(), [](Edge a, Edge b) {if (a.u == b.u) return a.e.to < b.e.to; return a.u < b.u;});
-    for (const auto &x : MST)
+        return count;
+    };
+    auto search = [&](int r, int c)
     {
-        int a = x.u, b = x.e.to;
-        if (b < a) {
-            swap(a, b);
+        if (!in_b(r, c) || vis[r][c] || g[r][c] == '1')
+            return;
+        queue<pair<int, int>> q;
+        q.push({r, c});
+        while (!q.empty())
+        {
+            auto [_r, _c] = q.front();
+            q.pop();
+
+            if (vis[_r][_c])
+                continue;
+            vis[_r][_c] = 1;
+            coast += get_coast(_r, _c);
+            // cout << coast << "\n";
+            for (const auto &[dr, dc] : look)
+            {
+                int nr = _r + dr, nc = _c + dc;
+                if (in_b(nr, nc) && !vis[nr][nc] && g[nr][nc] == '0')
+                    q.push({nr, nc});
+            }
         }
-        cout << a << " " << b << "\n";
+    };
+    auto count_edge = [&](int r, int c)
+    {
+        if (in_b(r, c))
+            coast += g[r][c] == '1';
+    };
+    rep(i, 0, max(N, M))
+    {
+        search(0, i);
+        search(i, 0);
+        search(N - 1, i);
+        search(i, M - 1);
+        count_edge(0, i);
+        count_edge(N - 1, i);
+        count_edge(i, 0);
+        count_edge(i, M - 1);
     }
+    cout << coast << "\n";
 }
 int main()
 {
@@ -164,10 +150,9 @@ int main()
     int T = 1;
     // OPTIONAL FOR SOME CONTESTS
     // cin >> T;
-    bool go = true;
-    while (go)
+    while (T--)
     {
-        solve(go);
+        solve();
     }
     return 0;
 }
